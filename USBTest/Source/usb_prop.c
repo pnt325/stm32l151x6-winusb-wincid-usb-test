@@ -84,7 +84,21 @@ ONE_DESCRIPTOR Config_Descriptor =
 	USBiAP2_SIZE_CONFIG_DESC
 };
 
-ONE_DESCRIPTOR String_Descriptor[6];
+ONE_DESCRIPTOR USBD_CompatID_Descriptor = 
+  {
+    (uint8_t*)&USBD_CompatIDDesc,
+    sizeof(USBD_CompatIDDescStruct)  
+  };
+ONE_DESCRIPTOR USBD_ExtProperties_Descriptor = 
+  {
+    (uint8_t*)USBD_ExtPropertiesDesc,
+    sizeof(USBiAP2_WINUSB_EXT_PROP_DESC_SIZE) 
+  };
+
+ONE_DESCRIPTOR String_Descriptor[7];
+
+static uint8_t *USBD_GetExtPropDescriptor(uint16_t Length);
+static uint8_t *USBD_GetCompatIDDescriptor(uint16_t Length);
 
 /*******************************************************************************
 * Function Name  : USBiAP2_init.
@@ -95,12 +109,14 @@ ONE_DESCRIPTOR String_Descriptor[6];
 *******************************************************************************/
 void USBiAP2_init(void)
 {
-   String_Descriptor[0] = (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringLangID, USBiAP2_StringLangID[0]};
-	String_Descriptor[1] = (ONE_DESCRIPTOR){(uint8_t*)USAiAP2_StringInterface, USAiAP2_StringInterface[0]};
-	String_Descriptor[2] = (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringVendor, USBiAP2_StringVendor[0]};
-	String_Descriptor[3] = (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringProduct, USBiAP2_StringProduct[0]};
-	String_Descriptor[4] = (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringSerial, USBiAP2_StringSerial[0]};
-	String_Descriptor[5] = (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringProtocol, USBiAP2_StringProtocol[0]};
+
+    String_Descriptor[USBD_IDX_LANGID_STR] 		= (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringLangID, 		USBiAP2_StringLangID[0]};
+	String_Descriptor[USBD_IDX_MFC_STR] 		= (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringVendor, 		USBiAP2_StringVendor[0]};
+	String_Descriptor[USBD_IDX_PRODUCT_STR] 	= (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringProduct, 	USBiAP2_StringProduct[0]};
+	String_Descriptor[USBD_IDX_SERIAL_STR] 		= (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringSerial, 		USBiAP2_StringSerial[0]};
+	String_Descriptor[USBD_IDX_INTERFACE_STR] 	= (ONE_DESCRIPTOR){(uint8_t*)USAiAP2_StringInterface, 	USAiAP2_StringInterface[0]};
+	String_Descriptor[USBD_IDX_WINUSB_STR] 		= (ONE_DESCRIPTOR){(uint8_t*)USBD_StringWinUSB, 		USBD_StringWinUSB[0]};
+	// String_Descriptor[5] = (ONE_DESCRIPTOR){(uint8_t*)USBiAP2_StringProtocol, USBiAP2_StringProtocol[0]};
 
 	pInformation->Current_Configuration = 0;
 
@@ -211,10 +227,10 @@ void USBiAP2_SetDeviceAddress (void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void USBiAP2_GetInterface (void)
-{
+// void USBiAP2_GetInterface (void)
+// {
 
-}
+// }
 
 /*******************************************************************************
 * Function Name  : USBiAP2_SetInterface.
@@ -223,10 +239,10 @@ void USBiAP2_GetInterface (void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void USBiAP2_SetInterface (void)
-{
+// void USBiAP2_SetInterface (void)
+// {
 
-}
+// }
 
 
 /*******************************************************************************
@@ -262,7 +278,31 @@ void USBiAP2_Status_Out(void)
 *******************************************************************************/
 RESULT USBiAP2_Data_Setup(uint8_t RequestNo)
 {
-   return USB_UNSUPPORT;
+  uint8_t *(*CopyRoutine)(uint16_t);
+  CopyRoutine = NULL;
+
+  if (RequestNo == USB_REQ_GET_OS_FEATURE_DESCRIPTOR)
+  {
+	  if (pInformation->USBwIndexs.bw.bb0 == CustomHID_TYPE_OS_FEATURE_EXT_COMPAT_ID && pInformation->USBbmRequestType == 0xC0)
+	  {
+		  CopyRoutine = USBD_GetCompatIDDescriptor;
+	  }
+	  else if (pInformation->USBwIndexs.bw.bb0 == CustomHID_TYPE_OS_FEATURE_EXT_PROPERTIES && pInformation->USBbmRequestType == 0xC1)
+	  {
+		  CopyRoutine = USBD_GetExtPropDescriptor;
+	  }
+  }
+
+  if (CopyRoutine == NULL)
+  {
+  	//Catches here on C0 request
+    return USB_UNSUPPORT;
+  }
+
+  pInformation->Ctrl_Info.CopyData = CopyRoutine;
+  pInformation->Ctrl_Info.Usb_wOffset = 0;
+  (*CopyRoutine)(0);
+  return USB_SUCCESS;
 }
 
 /*******************************************************************************
@@ -310,15 +350,33 @@ uint8_t *USBiAP2_GetConfigDescriptor(uint16_t Length)
 *******************************************************************************/
 uint8_t *USBiAP2_GetStringDescriptor(uint16_t Length)
 {
-  uint8_t wValue0 = pInformation->USBwValue0;
-  if (wValue0 > 5)
-  {
-    return NULL;
-  }
-  else
-  {
-    return Standard_GetDescriptorData(Length, &String_Descriptor[wValue0]);
-  }
+	uint8_t wValue0 = pInformation->USBwValue0;
+	if (wValue0 == 0xEE)
+	{
+		return Standard_GetDescriptorData(Length, &String_Descriptor[USBD_IDX_WINUSB_STR]);
+	}
+	if (wValue0 == USBD_IDX_LANGID_STR)
+	{
+		return Standard_GetDescriptorData(Length, &String_Descriptor[USBD_IDX_LANGID_STR]);
+	}
+	if (wValue0 == USBD_IDX_MFC_STR)
+	{
+		return Standard_GetDescriptorData(Length, &String_Descriptor[USBD_IDX_MFC_STR]);
+	}
+	if (wValue0 == USBD_IDX_PRODUCT_STR)
+	{
+		return Standard_GetDescriptorData(Length, &String_Descriptor[USBD_IDX_PRODUCT_STR]);
+	}
+	if (wValue0 == USBD_IDX_SERIAL_STR)
+	{
+		return Standard_GetDescriptorData(Length, &String_Descriptor[USBD_IDX_SERIAL_STR]);
+	}
+	if (wValue0 == USBD_IDX_INTERFACE_STR)
+	{
+		return Standard_GetDescriptorData(Length, &String_Descriptor[USBD_IDX_INTERFACE_STR]);
+	}
+
+	return NULL;
 }
 
 /*******************************************************************************
@@ -341,4 +399,28 @@ RESULT USBiAP2_Get_Interface_Setting(uint8_t Interface, uint8_t AlternateSetting
     return USB_UNSUPPORT;
   }
   return USB_SUCCESS;
+}
+
+/*******************************************************************************
+* Function Name  : USBD_GetExtPropDescriptor
+* Description    : get the protocol value
+* Input          : Length.
+* Output         : None.
+* Return         : address of the protocol value.
+*******************************************************************************/
+static uint8_t *USBD_GetExtPropDescriptor(uint16_t Length)
+{
+	return Standard_GetDescriptorData(Length, &USBD_ExtProperties_Descriptor);
+}
+
+/*******************************************************************************
+* Function Name  : USBD_GetCompatIDDescriptor
+* Description    : get the protocol value
+* Input          : Length.
+* Output         : None.
+* Return         : address of the protocol value.
+*******************************************************************************/
+static uint8_t *USBD_GetCompatIDDescriptor(uint16_t Length)
+{
+	return Standard_GetDescriptorData(Length, &USBD_CompatID_Descriptor);
 }

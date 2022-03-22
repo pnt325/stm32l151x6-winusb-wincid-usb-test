@@ -29,22 +29,24 @@
 #define __USB_PROP_H__
 
 #define USBiAP2_GetConfiguration								NOP_Process
-//#define USBiAP2_GetInterface								NOP_Process
-//#define USBiAP2_SetInterface								NOP_Process
-#define USBiAP2_GetStatus										NOP_Process
-#define USBiAP2_ClearFeature									NOP_Process
+#define USBiAP2_GetInterface								    NOP_Process
+#define USBiAP2_SetInterface								    NOP_Process
+#define USBiAP2_GetStatus										    NOP_Process
+#define USBiAP2_ClearFeature									  NOP_Process
 #define USBiAP2_SetEndPointFeature   						NOP_Process
 #define USBiAP2_SetDeviceFeature								NOP_Process
 //#define USBiAP2_SetConfiguration							NOP_Process
 //#define USBiAP2_SetDeviceAddress							NOP_Process
+#define  CustomHID_TYPE_OS_FEATURE_EXT_PROPERTIES           5
+#define  CustomHID_TYPE_OS_FEATURE_EXT_COMPAT_ID            4
 
 void USBiAP2_init(void);
 void USBiAP2_Reset(void);
 
 void USBiAP2_SetConfiguration(void);
 void USBiAP2_SetDeviceAddress (void);
-void USBiAP2_GetInterface (void);
-void USBiAP2_SetInterface (void);
+// void USBiAP2_GetInterface (void);
+// void USBiAP2_SetInterface (void);
 
 void USBiAP2_Status_In (void);
 void USBiAP2_Status_Out (void);
