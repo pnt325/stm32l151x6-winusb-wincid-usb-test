@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "usb_lib.h": "c",
+        "hw_config.h": "c",
+        "bsp.h": "c",
+        "stm32l1xx.h": "c"
+    }
+}

@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "C:\Users\Matt\Desktop\USBTest\settings\USBTest.Debug.general.xcl" --backend -f "C:\Users\Matt\Desktop\USBTest\settings\USBTest.Debug.driver.xcl" 
+"C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "C:\Users\phatn\Documents\git_repo\freelance-WINUSB\USBTest\settings\USBTest.Debug.general.xcl" --backend -f "C:\Users\phatn\Documents\git_repo\freelance-WINUSB\USBTest\settings\USBTest.Debug.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "C:\Users\Matt\Desktop\USBTest\settings\USBTest.Debug.general.xcl" "--debug_file=%~1" --backend -f "C:\Users\Matt\Desktop\USBTest\settings\USBTest.Debug.driver.xcl" 
+"C:\Program Files\IAR Systems\Embedded Workbench 9.0\common\bin\cspybat" -f "C:\Users\phatn\Documents\git_repo\freelance-WINUSB\USBTest\settings\USBTest.Debug.general.xcl" "--debug_file=%~1" --backend -f "C:\Users\phatn\Documents\git_repo\freelance-WINUSB\USBTest\settings\USBTest.Debug.driver.xcl" 
 
 @echo off 
 :end
